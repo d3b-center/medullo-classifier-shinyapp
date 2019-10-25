@@ -38,23 +38,10 @@ The application requires two inputs:
 
 	2. Metadata with subtype information. Allowed formats: Tab delimited text, RData and RDS files. 
 
-	The metadata file should have two columns: **sample_id** (which should match exactly with expression matrix column names) and **subtypes**. Allowed values for subtypes are: Group3, Group4, SSH, WNT and U (for Unknown).
+	For .RData and .RDS formats, the metadata file should be a character vector of subtypes. Allowed values for subtypes are: Group3, Group4, SSH, WNT and U (for Unknown). For Tab delimited .txt format, the file should have one subtype per line and should have a length equal to the sample identifiers in the expression matrix.
    
-	+-----------+-----------+-----------+
-	|           | sample_id | subtype   |
-	+-----------+-----------+-----------+
-	| Sample_1  |           | Group3    |
-	+-----------+-----------+-----------+
-	| Sample_2  |           | Group4    |
-	+-----------+-----------+-----------+
-	| Sample_3  |           | SSH       |
-	+-----------+-----------+-----------+
-	| Sample_4  |           | WNT       |
-	+-----------+-----------+-----------+
-	| Sample_n  |           | U         |
-	+-----------+-----------+-----------+
 
-**NOTE: Both files should have the same input type.**
+**NOTE: Both expression and meta files should have the same extension type**
 
 Output
 ======
