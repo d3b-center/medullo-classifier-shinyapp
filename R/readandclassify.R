@@ -1,11 +1,12 @@
 library(medulloPackage)
 
 readandclassify <- function(expr, meta, ext){
-  
+
   if(ext == "tab"){
     print("reading TAB delimited file!")
-    expr <- read.delim(expr, file = expr, header = T, check.names = F, stringsAsFactors = F)
-    actual <- read.delim(expr, file = meta, header = F, check.names = F, stringsAsFactors = F)
+    expr <- read.delim(file = expr, header = T, check.names = F, stringsAsFactors = F)
+    actual <- read.delim(file = meta, header = F, check.names = F, stringsAsFactors = F)
+    actual <- as.character(actual[,1])
   } else if(ext == "RData") {
     print("loading RData objects!")
     expr <- get(load(expr))
@@ -15,22 +16,18 @@ readandclassify <- function(expr, meta, ext){
     expr <- readRDS(expr)
     actual <- readRDS(meta)
   }
-  actual <- as.character(actual$subtype)
-  
+
   print("Done reading...")
-  # print(head(expr)[,1:5])
-  # print(head(actual))
-  
-  
+
   # classify
   print("Start classifying...")
   pred <- classify(exprs = expr)
   print("Done classifying...!")
-  # print(head(pred))
+
   # stats
   print("Start accuracy testing...")
-  accuracy <- calcStats(myClassActual = actual, myClassPred = pred)
+  accuracy <- calcStats(myClassActual = actual, myClassPred = pred$best.fit)
   print("Done accuracy testing...!")
-  # print(accuracy)
-  return(accuracy)
+
+  return(list(accuracy, pred))
 }
