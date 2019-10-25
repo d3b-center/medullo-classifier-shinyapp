@@ -40,9 +40,10 @@ ui <- dashboardPage(
                  offset = 0, style='padding-left:15px;'))
     ),
     tabsetPanel(type = "tabs",
-                tabPanel("Confusion Matrix", dataTableOutput(outputId = "tab1")),
-                tabPanel("Overall Statistics", dataTableOutput(outputId = "tab2")),
-                tabPanel("By Class", dataTableOutput(outputId = "tab3")))
+                tabPanel("Prediction", dataTableOutput(outputId = "tab1")),
+                tabPanel("Confusion Matrix", dataTableOutput(outputId = "tab2")),
+                tabPanel("Overall Statistics", dataTableOutput(outputId = "tab3")),
+                tabPanel("By Class", dataTableOutput(outputId = "tab4")))
   )
 )
 
@@ -87,7 +88,7 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[1]], pageLength = 4)
+      viewDataTable(res[[2]], pageLength = 4)
     })
   })
 
@@ -96,7 +97,7 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[2]], pageLength = 7)
+      viewDataTable(res[[1]][[1]], pageLength = 7)
     })
   })
 
@@ -105,9 +106,19 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[3]], pageLength = 4)
+      viewDataTable(res[[1]][[2]], pageLength = 4)
     })
   })
+
+  output$tab4 <- DT::renderDataTable({
+    if(input$submit1 == 0){
+      return()
+    }
+    isolate({
+      viewDataTable(res[[1]][[3]], pageLength = 4)
+    })
+  })
+
 }
 
 shinyApp(ui, server)
