@@ -4,6 +4,7 @@ library(shinyjs)
 library(shinyIncubator)
 library(DT)
 library(medulloPackage)
+library(e1071)
 
 library(BiocManager)
 options(repos = BiocManager::repositories())
@@ -12,6 +13,9 @@ options(shiny.sanitize.errors = TRUE)
 options(shiny.maxRequestSize = 500*1024^2)
 source('R/readandclassify.R')
 source('R/viewDataTable.R')
+
+# global variable
+# res <- NULL
 
 ui <- dashboardPage(
   dashboardHeader(title = "Medullo Classifier"),
@@ -72,15 +76,27 @@ server <- function(input, output) {
     c(infile$datapath, metafile$datapath, extension)
   })
 
-  observe({
-    if(input$submit1 == 0){
-      return()
-    }
+  # change observe to reactive
+  # observe({
+  #   if(input$submit1 == 0){
+  #     return()
+  #   }
+  #   expr <- path2file()[1]
+  #   meta <- path2file()[2]
+  #   extension <- path2file()[3]
+  #   withProgress(message = "Classifying subtypes...", detail = "Computing stats...", min = 1, value = 10, max = 10,{
+  #   res <<- readandclassify(expr, meta, ext = extension)
+  #   })
+  # })
+  create.res <- reactive({
+    validate(
+      need(input$submit1, "Please hit submit!")
+    )
     expr <- path2file()[1]
     meta <- path2file()[2]
     extension <- path2file()[3]
     withProgress(message = "Classifying subtypes...", detail = "Computing stats...", min = 1, value = 10, max = 10,{
-    res <<- readandclassify(expr, meta, ext = extension)
+      res <<- readandclassify(expr, meta, ext = extension)
     })
   })
 
@@ -89,7 +105,8 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[2]], pageLength = 4)
+      viewDataTable(create.res()$pred,  pageLength = 4)
+      #  viewDataTable(res[[2]], pageLength = 4)
     })
   })
 
@@ -98,7 +115,8 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[1]][[1]], pageLength = 7)
+      viewDataTable(create.res()$accuracy[[1]], pageLength = 7)
+      # viewDataTable(res[[1]][[1]], pageLength = 7)
     })
   })
 
@@ -107,7 +125,8 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[1]][[2]], pageLength = 4)
+      viewDataTable(create.res()$accuracy[[2]], pageLength = 4)
+      # viewDataTable(res[[1]][[2]], pageLength = 4)
     })
   })
 
@@ -116,7 +135,8 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(res[[1]][[3]], pageLength = 4)
+      viewDataTable(create.res()$accuracy[[3]], pageLength = 4)
+      # viewDataTable(res[[1]][[3]], pageLength = 4)
     })
   })
 
