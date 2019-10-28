@@ -29,5 +29,5 @@ readandclassify <- function(expr, meta, ext){
   accuracy <- calcStats(myClassActual = actual, myClassPred = pred$best.fit)
   print("Done accuracy testing...!")
 
-  return(list(accuracy, pred))
+  return(list(accuracy = accuracy, pred = pred))
 }
