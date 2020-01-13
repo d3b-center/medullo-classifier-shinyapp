@@ -19,6 +19,8 @@ Introduction
 
 R Shiny application built on the Medulloblastoma subtypes classifier R package: https://github.com/d3b-center/medullo-classifier-package
 
+The app can be accessed here: https://komalrathi.shinyapps.io/medulloclassifiershinyapp
+
 Input files
 ===========
 
