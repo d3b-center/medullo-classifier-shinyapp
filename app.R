@@ -4,7 +4,6 @@ library(shinyjs)
 library(shinyIncubator)
 library(DT)
 library(medulloPackage)
-library(e1071)
 
 library(BiocManager)
 options(repos = BiocManager::repositories())
@@ -14,8 +13,9 @@ options(shiny.maxRequestSize = 500*1024^2)
 source('R/readandclassify.R')
 source('R/viewDataTable.R')
 
-# global variable
-# res <- NULL
+# example data for download
+load('data/GSE109401_exprs.RData')
+load('data/GSE109401_meta.RData')
 
 ui <- dashboardPage(
   dashboardHeader(title = "Medullo Classifier"),
@@ -26,23 +26,30 @@ ui <- dashboardPage(
   dashboardBody(
     # Boxes need to be put in a row (or column)
     fluidRow(
-      box(width = 12, background = "navy",
+      box(width = 8, background = "navy",
           column(5, fileInput(inputId = "exprinput",
-                    label = "Input Expression Matrix",
+                    label = "Expression Matrix",
                     multiple = F)),
           column(5, fileInput(inputId = "metainput",
-                    label = "Input Metadata",
+                    label = "Subtype Info (Optional)",
                     multiple = F)),
-          column(2, radioButtons("ext", "Type",
-                       choices = c("TAB Delimited" = "tab",
+          column(2, selectInput("ext", "Type",
+                       choices = c("TSV" = "tsv",
                                    "RData" = "RData",
                                    "RDS" = "RDS"), selected = "RData")),
+          br(),
+          column(width = 3, actionButton(inputId = "submit1", label = "Run Classifier", 
+                                         icon = icon("paper-plane")))),
+      box(width = 4, background = "navy",
+          column(5, selectInput("dataset", "Download Example Data",
+                                choices = c("TSV" = ".tsv",
+                                            "RData" = ".RData",
+                                            "RDS" = ".RDS"), selected = "RData"),
+                 style='padding-top:15px;'),
+          br(),
+          column(4, downloadButton("downloadExpr", "Expression Matrix")),
           br(), br(),
-          # tags$head(
-          #   tags$style(HTML('#submit1{background-color:gray}'))
-          # ),
-          column(width = 3, actionButton(inputId = "submit1", label = "Run Classifier", icon = icon("paper-plane")),
-                 offset = 0, style='padding-left:15px;'))
+          column(4, downloadButton("downloadMeta", "Subtype Info")))
     ),
     tabsetPanel(type = "tabs",
                 tabPanel("Prediction", dataTableOutput(outputId = "tab1")),
@@ -54,47 +61,22 @@ ui <- dashboardPage(
 
 server <- function(input, output) {
 
-  observe({
-    if(is.null(input$exprinput) && is.null(input$metainput)) {
-      shinyjs::disable("submit1")
-    } else {
-      shinyjs::enable("submit1")
-    }
-  })
-
   # fileInput
   path2file <- reactive({
-    shinyjs::disable("submit1")
     infile <- input$exprinput
     metafile <- input$metainput
     extension <- input$ext
-    if (is.null(infile) | is.null(metafile)){
-      shinyjs::disable("submit1")
-      return(NULL)
-    }
-    shinyjs::enable("submit1")
-    c(infile$datapath, metafile$datapath, extension)
+    c(infile$datapath, extension, metafile$datapath)
   })
 
-  # change observe to reactive
-  # observe({
-  #   if(input$submit1 == 0){
-  #     return()
-  #   }
-  #   expr <- path2file()[1]
-  #   meta <- path2file()[2]
-  #   extension <- path2file()[3]
-  #   withProgress(message = "Classifying subtypes...", detail = "Computing stats...", min = 1, value = 10, max = 10,{
-  #   res <<- readandclassify(expr, meta, ext = extension)
-  #   })
-  # })
   create.res <- reactive({
     validate(
       need(input$submit1, "Please hit submit!")
     )
     expr <- path2file()[1]
-    meta <- path2file()[2]
-    extension <- path2file()[3]
+    extension <- path2file()[2]
+    meta <- path2file()[3]
+    print(meta)
     withProgress(message = "Classifying subtypes...", detail = "Computing stats...", min = 1, value = 10, max = 10,{
       res <<- readandclassify(expr, meta, ext = extension)
     })
@@ -106,7 +88,6 @@ server <- function(input, output) {
     }
     isolate({
       viewDataTable(create.res()$pred,  pageLength = 4)
-      #  viewDataTable(res[[2]], pageLength = 4)
     })
   })
 
@@ -115,8 +96,9 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(create.res()$accuracy[[1]], pageLength = 7)
-      # viewDataTable(res[[1]][[1]], pageLength = 7)
+      if(!is.na(create.res()$accuracy)){
+        viewDataTable(create.res()$accuracy[[1]], pageLength = 7)
+      }
     })
   })
 
@@ -125,8 +107,9 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(create.res()$accuracy[[2]], pageLength = 4)
-      # viewDataTable(res[[1]][[2]], pageLength = 4)
+      if(!is.na(create.res()$accuracy)){
+        viewDataTable(create.res()$accuracy[[2]], pageLength = 4)
+      }
     })
   })
 
@@ -135,10 +118,41 @@ server <- function(input, output) {
       return()
     }
     isolate({
-      viewDataTable(create.res()$accuracy[[3]], pageLength = 4)
-      # viewDataTable(res[[1]][[3]], pageLength = 4)
+      if(!is.na(create.res()$accuracy)){
+        viewDataTable(create.res()$accuracy[[3]], pageLength = 4)
+      }
     })
   })
+  
+  # Download example expression matrix
+  output$downloadExpr <- downloadHandler(
+    filename = function() {
+      paste0('GSE109401_exprs', input$dataset)
+    },
+    content = function(file) {
+      if(input$dataset == ".tsv"){
+        write.table(exprs_109401, file = file, quote = F, sep = "\t")
+      } else if(input$dataset == ".RData"){
+        save(exprs_109401, file = file)
+      } else {
+        saveRDS(exprs_109401, file = file)
+      }
+    }
+  )
+  output$downloadMeta <- downloadHandler(
+    filename = function() {
+      paste0('GSE109401_meta', input$dataset)
+    },
+    content = function(file) {
+      if(input$dataset == ".tsv"){
+        write.table(meta_109401, file = file, quote = F, sep = "\t", row.names = F, col.names = F)
+      } else if(input$dataset == ".RData"){
+        save(meta_109401, file = file)
+      } else {
+        saveRDS(meta_109401, file = file)
+      }
+    }
+  )
 
 }
 

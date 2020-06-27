@@ -1,20 +1,26 @@
 library(medulloPackage)
 
-readandclassify <- function(expr, meta, ext){
+readandclassify <- function(expr, meta = NA, ext){
 
-  if(ext == "tab"){
+  if(ext == "tsv"){
     print("reading TAB delimited file!")
     expr <- read.delim(file = expr, header = T, check.names = F, stringsAsFactors = F)
-    actual <- read.delim(file = meta, header = F, check.names = F, stringsAsFactors = F)
-    actual <- as.character(actual[,1])
+    if(!is.na(meta)){
+      actual <- read.delim(file = meta, header = F, check.names = F, stringsAsFactors = F)
+      actual <- as.character(actual[,1])
+    }
   } else if(ext == "RData") {
     print("loading RData objects!")
     expr <- get(load(expr))
-    actual <- get(load(meta))
+    if(!is.na(meta)){
+      actual <- get(load(meta))
+    }
   } else if(ext == "RDS"){
     print("reading RDS files!")
     expr <- readRDS(expr)
-    actual <- readRDS(meta)
+    if(!is.na(meta)){
+      actual <- readRDS(meta)
+    }
   }
 
   print("Done reading...")
@@ -25,9 +31,13 @@ readandclassify <- function(expr, meta, ext){
   print("Done classifying...!")
 
   # stats
-  print("Start accuracy testing...")
-  accuracy <- calcStats(myClassActual = actual, myClassPred = pred$best.fit)
-  print("Done accuracy testing...!")
+  if(!is.na(meta)){
+    print("Start accuracy testing...")
+    accuracy <- calcStats(myClassActual = actual, myClassPred = pred$best.fit)
+    print("Done accuracy testing...!")
+  } else {
+    accuracy <- NA
+  }
 
   return(list(accuracy = accuracy, pred = pred))
 }
