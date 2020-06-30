@@ -6,6 +6,7 @@
 
 viewDataTable <- function(dat, pageLength){
   DT::datatable(dat,
+                class = "display nowrap",
                 extensions = c('Buttons'),
                 selection = "single",
                 filter = "bottom",

@@ -28,6 +28,7 @@ readandclassify <- function(expr, meta = NA, ext){
   # classify
   print("Start classifying...")
   pred <- classify(exprs = expr)
+  pred$p.value <- format(pred$p.value, scientific = T, digits = 3)
   print("Done classifying...!")
 
   # stats
